@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Test API",
   "main": "server.js",
-  "repository": "",
+  "repository": "https://github.com/nelliott-personal/expresstest.git",
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
