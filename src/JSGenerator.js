@@ -1,4 +1,4 @@
 const JSGenerator = () => {
-  return `function asdfasdfasdf(alertString, algos){alert(alertString);};`;
+  return `var myfunction = function(alertString, anotherAlertString){alert(alertString);};`;
 }
 module.exports = JSGenerator;

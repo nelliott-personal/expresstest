@@ -1,46 +1,51 @@
 const _ = require('lodash'),
+      beeper = require('beeper'),
       chalk = require('chalk'),
+      co = require('co'),
       crypto = require('crypto'),
       dotenv = require('dotenv').config(),
       express = require('express'),
-      fs = require('fs'),
-      JSGenerator = require('./JSGenerator'),
+      fs = require('mz/fs'),
       log = require('./utils/Log'),
       path = require('path'),
-      uglify = require('uglify-js'),
-      url = require('url');
+      uglify = require('uglify-js');
 
-const app = express(),
-      port = process.env.PORT;
+const app = express();
+const JSGenerator = require('./JSGenerator');
 
 // ROUTES
 
 app.get('/js/:hash?', (req, res, next) => {
-  if (!fs.existsSync(process.env.JSTEMPLATE_PATH)) {
-    fs.mkdirSync(process.env.JSTEMPLATE_PATH);
-  }
-  const js = uglify.minify(JSGenerator(), { mangle:{ toplevel: true } }).code;
-  const filename = `${crypto.createHash('md5').update(js).digest('hex')}.js`;
-  const jspath = `./jstemplates/${req.params.hash || filename}`;
+  const JS = uglify.minify(JSGenerator()).code;
+  const JSPATH = `./jstemplates/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }.js` }`;
 
-  res.set('Content-Type', 'text/javascript');
-
-  fs.stat(jspath, (err, stats) => {
-    if (err) {
-      log(`writing file: ${jspath}`);
-      fs.writeFile(jspath, js, (err) => {
-        if (err) throw err;
-        res.send(js);
-      });
+  log(chalk.rgb(0, 223, 255)(JSPATH));
+  co(function *(){
+    let ex = yield fs.exists(process.env.JSTEMPLATE_PATH);
+    if(!ex) {
+      yield fs.mkdir(process.env.JSTEMPLATE_PATH);
     }
-    else {
-      log(`sending existing file: ${jspath}`);
-      fs.readFile(jspath, (err, data) => {
-        if (err) throw err;
-        res.send(data);
-      });
+    let fEx = yield fs.exists(JSPATH);
+    if(!fEx){
+      yield fs.writeFile(JSPATH, JS);
     }
+  })
+  .then(() => {
+    res.set('Content-Type', 'application/javascript');
+    fs.readFile(JSPATH).then((data) => {
+      res.send(data);
+    }).catch((err) => {
+      onError(err);
+    });
+  })
+  .catch((err) => {
+    onError(err);
   });
 });
 
-app.listen(port, () => log(`Listening on port ${port}!`));
+function onError(err) {
+  beeper();
+  log(err);
+}
+
+app.listen(process.env.PORT, () => log(`Listening on port ${ process.env.PORT }!`));

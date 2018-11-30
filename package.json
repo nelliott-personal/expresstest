@@ -5,11 +5,14 @@
   "main": "src/index.js",
   "repository": "https://github.com/nelliott-personal/expresstest.git",
   "dependencies": {
+    "beeper": "^1.1.1",
     "chalk": "^2.4.1",
+    "co": "^4.6.0",
     "dotenv": "^6.1.0",
     "express": "^4.16.3",
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
+    "mz": "^2.7.0",
     "nodemon": "^1.18.7",
     "uglify-js": "^3.4.9"
   },
