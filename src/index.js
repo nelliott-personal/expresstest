@@ -11,15 +11,16 @@ const _ = require('lodash'),
       uglify = require('uglify-js');
 
 const app = express();
-const JSGenerator = require('./JSGenerator');
 
 // ROUTES
 
 app.get('/js/:hash?', (req, res, next) => {
+  const JSGenerator = require('./JSGenerator');
   const JS = uglify.minify(JSGenerator()).code;
   const JSPATH = `./jstemplates/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }.js` }`;
 
   log(chalk.rgb(0, 223, 255)(JSPATH));
+
   co(function *(){
     let ex = yield fs.exists(process.env.JSTEMPLATE_PATH);
     if(!ex) {
@@ -41,6 +42,36 @@ app.get('/js/:hash?', (req, res, next) => {
   .catch((err) => {
     onError(err);
   });
+});
+
+app.get('/Components/:component', (req, res, next) => {
+  const Banner = require('./Banner');
+  const ComponentFactory = require('./ComponentFactory');
+
+  res.send(ComponentFactory(req.params.component, new Banner({ width: 300, height: 250}), { imgUrl: 'https://media.giphy.com/media/LLWP1seiT4fC/giphy.gif'}).render());
+});
+
+app.get('/Banners/:banner', (req, res, next) => {
+  const ComponentFactory = require('./ComponentFactory');
+  const Banner = require('./Banner');
+  const B = new Banner({
+    width: 768,
+    height: 90
+  });
+
+  const Coverpage = require('./Components/Coverpage');
+  const COMP = new Coverpage({ }, B);
+  log(_.map(B.get('states'), 'components'));
+  res.send(_.template(`
+    <%= B.get('name') %><br />
+    <pre><code>${ JSON.stringify(B.options, null, 2) }</code></pre>
+    <% _.each(_.map(B.get('states'), 'components'), (cs) => {  %>
+      <% _.each(cs, (c) => { %>
+        <%= c.name %><br />
+        <%= ComponentFactory(c.name, B, c.options).render() %>
+      <% }); %>
+    <% }) %>
+  `)({ B: B, ComponentFactory: ComponentFactory }));
 });
 
 function onError(err) {
