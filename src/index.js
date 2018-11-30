@@ -16,9 +16,8 @@ const app = express(),
 // ROUTES
 
 app.get('/js/:hash?', (req, res, next) => {
-  const dir = './jstemplates';
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
+  if (!fs.existsSync(process.env.JSTEMPLATE_PATH)) {
+    fs.mkdirSync(process.env.JSTEMPLATE_PATH);
   }
   const js = uglify.minify(JSGenerator(), { mangle:{ toplevel: true } }).code;
   const filename = `${crypto.createHash('md5').update(js).digest('hex')}.js`;
@@ -31,7 +30,6 @@ app.get('/js/:hash?', (req, res, next) => {
       log(`writing file: ${jspath}`);
       fs.writeFile(jspath, js, (err) => {
         if (err) throw err;
-
         res.send(js);
       });
     }
@@ -39,7 +37,6 @@ app.get('/js/:hash?', (req, res, next) => {
       log(`sending existing file: ${jspath}`);
       fs.readFile(jspath, (err, data) => {
         if (err) throw err;
-        log(data);
         res.send(data);
       });
     }
