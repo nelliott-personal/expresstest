@@ -13,17 +13,17 @@ const _ = require('lodash'),
 const app = express(),
       port = process.env.PORT;
 
-//app.enable('view cache');
-
 // ROUTES
 
 app.get('/js/:hash?', (req, res, next) => {
-  const js = JSGenerator();
+  const js = uglify.minify(JSGenerator(), { mangle:{ toplevel: true } }).code;
   const filename = `${crypto.createHash('md5').update(js).digest('hex')}.js`;
   const jspath = path.join(__dirname, '../public/jstemplates', `${req.params.hash || filename}`);
-  res.set('Content-Type', 'text/html');
+
+  res.set('Content-Type', 'text/javascript');
+
   fs.stat(jspath, (err, stats) => {
-    if (err) {  // if file does not exist
+    if (err) {
       log(`writing file: ${jspath}`);
       fs.writeFile(jspath, js, (err) => {
         if (err) throw err;
@@ -31,7 +31,7 @@ app.get('/js/:hash?', (req, res, next) => {
         res.send(js);
       });
     }
-    else { // if file exists
+    else {
       log(`sending existing file: ${jspath}`);
       fs.readFile(jspath, (err, data) => {
         if (err) throw err;
