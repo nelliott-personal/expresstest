@@ -14,8 +14,14 @@ const app = express();
 
 // ROUTES
 
-app.get('/js/:hash?', (req, res, next) => {
+app.use((req, res, next) => {
   console.time("method");
+  next();
+  console.log(req.originalUrl);
+  console.timeEnd("method");
+})
+
+app.get('/js/:hash?', (req, res, next) => {
   const JSGenerator = require('./JSGenerator');
   const JS = uglify.minify(JSGenerator()).code;
   const JSPATH = `${ process.env.JSTEMPLATE_PATH }/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }` }.js`;
@@ -43,20 +49,16 @@ app.get('/js/:hash?', (req, res, next) => {
   .catch((err) => {
     onError(err);
   });
-  console.timeEnd("method");
 });
 
 app.get('/Components/:component', (req, res, next) => {
-  console.time("method");
   const Banner = require('./Banner');
   const ComponentFactory = require('./ComponentFactory');
 
   res.send(ComponentFactory(req.params.component, new Banner({ width: 300, height: 250}), { imgUrl: 'https://media.giphy.com/media/LLWP1seiT4fC/giphy.gif'}).render());
-  console.timeEnd("method");
 });
 
 app.get('/Banners/:banner', (req, res, next) => {
-  console.time("method");
   const ComponentFactory = require('./ComponentFactory');
   const Banner = require('./Banner');
   const B = new Banner({
@@ -64,7 +66,6 @@ app.get('/Banners/:banner', (req, res, next) => {
     height: 90
   });
 
-  log(_.map(B.get('states'), 'components'));
   res.send(_.template(`
     <%= B.get('name') %><br />
     <pre><code>${ JSON.stringify(B.options, null, 2) }</code></pre>
@@ -75,7 +76,6 @@ app.get('/Banners/:banner', (req, res, next) => {
       <% }); %>
     <% }) %>
   `)({ B: B, ComponentFactory: ComponentFactory }));
-  console.timeEnd("method");
 });
 
 function onError(err) {

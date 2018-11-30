@@ -1,6 +1,6 @@
 const Coverpage = require('./Components/Coverpage');
 
-const componentFactory = (name, banner, options) => {
+const ComponentFactory = (name, banner, options) => {
   switch(name.toLowerCase()){
     case 'coverpage':
       return new Coverpage(options, banner);
@@ -8,4 +8,4 @@ const componentFactory = (name, banner, options) => {
   }
 }
 
-module.exports = componentFactory;
+module.exports = ComponentFactory;
