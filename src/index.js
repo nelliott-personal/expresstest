@@ -1,40 +1,45 @@
-const express = require('express');
-const port = 2047;
-const app = express();
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+const _ = require('lodash'),
+      chalk = require('chalk'),
+      crypto = require('crypto'),
+      dotenv = require('dotenv').config(),
+      express = require('express'),
+      fs = require('fs'),
+      JSGenerator = require('./JSGenerator'),
+      log = require('./utils/Log'),
+      path = require('path'),
+      uglify = require('uglify-js'),
+      url = require('url');
 
-app.enable('view cache');
+const app = express(),
+      port = process.env.PORT;
 
-fs.watch('./index.js')
+//app.enable('view cache');
 
 // ROUTES
 
-app.get('/', (req, res, next) => {
-
-  let js = 'x = 13;';
-
-  let md5sum = crypto.createHash('md5').update(js).digest('hex');
-
-  let jspath = path.join(__dirname, '../public/jstemplates', md5sum + '.js');
-
-
+app.get('/js/:hash?', (req, res, next) => {
+  const js = JSGenerator();
+  const filename = `${crypto.createHash('md5').update(js).digest('hex')}.js`;
+  const jspath = path.join(__dirname, '../public/jstemplates', `${req.params.hash || filename}`);
+  res.set('Content-Type', 'text/html');
   fs.stat(jspath, (err, stats) => {
-    if (err) {
-      console.log('writing file: ' + jspath);
+    if (err) {  // if file does not exist
+      log(`writing file: ${jspath}`);
       fs.writeFile(jspath, js, (err) => {
-          if (err) throw err;
-          res.set({"Content-Disposition":"attachment; filename=\"" + md5sum + "\""});
-          res.send(js);
+        if (err) throw err;
+
+        res.send(js);
       });
     }
-    else {
-      console.log('sending existing file: ' + jspath);
-      res.set({"Content-Disposition":"attachment; filename=\"" + md5sum + "\""});
-      res.sendFile(jspath);
+    else { // if file exists
+      log(`sending existing file: ${jspath}`);
+      fs.readFile(jspath, (err, data) => {
+        if (err) throw err;
+        log(data);
+        res.send(data);
+      });
     }
   });
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}!`));
+app.listen(port, () => log(`Listening on port ${port}!`));
