@@ -20,6 +20,10 @@ app.get('/js/:hash?', (req, res, next) => {
   const filename = `${crypto.createHash('md5').update(js).digest('hex')}.js`;
   const jspath = path.join(__dirname, '../public/jstemplates', `${req.params.hash || filename}`);
 
+  var dir = __dirname + '/upload';
+  if (!path.existsSync('./public')) {
+      fs.mkdirSync('./public');
+  }
   res.set('Content-Type', 'text/javascript');
 
   fs.stat(jspath, (err, stats) => {
