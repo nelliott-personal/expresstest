@@ -7,6 +7,7 @@ const _ = require('lodash'),
       express = require('express'),
       fs = require('mz/fs'),
       log = require('./utils/Log'),
+      mcache = require('memory-cache'),
       path = require('path'),
       uglify = require('uglify-js');
 
@@ -14,14 +15,33 @@ const app = express();
 
 // ROUTES
 
-app.use((req, res, next) => {
-  console.time("method");
-  next();
-  console.log(req.originalUrl);
-  console.timeEnd("method");
-})
+var cache = (duration) => {
+  return (req, res, next) => {
+    console.time('method');
+    let key = '__express__' + req.originalUrl || req.url;
+    let cachedBody = mcache.get(key);
+    if(cachedBody){
+      log('cached');
+      res.send(cachedBody);
+      console.timeEnd('method');
+      return;
+    }
+    else{
+      log('not cached');
+      res.sendResponse = res.send;
+      res.send = (body) => {
+        mcache.put(key, body, duration * 1000);
+        res.sendResponse(body);
+      }
+    }
+    next();
+    console.timeEnd('method');
+  }
+}
 
-app.get('/js/:hash?', (req, res, next) => {
+
+
+app.get('/js/:hash?', cache(process.env.CACHE_LENGTH), (req, res) => {
   const JSGenerator = require('./JSGenerator');
   const JS = uglify.minify(JSGenerator()).code;
   const JSPATH = `${ process.env.JSTEMPLATE_PATH }/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }` }.js`;
@@ -51,14 +71,14 @@ app.get('/js/:hash?', (req, res, next) => {
   });
 });
 
-app.get('/Components/:component', (req, res, next) => {
+app.get('/Components/:component', cache(process.env.CACHE_LENGTH), (req, res) => {
   const Banner = require('./Banner');
   const ComponentFactory = require('./ComponentFactory');
 
-  res.send(ComponentFactory(req.params.component, new Banner({ width: 300, height: 250}), { imgUrl: 'https://media.giphy.com/media/LLWP1seiT4fC/giphy.gif'}).render());
+  res.send(ComponentFactory(req.params.component, null, { imgUrl: 'https://media.giphy.com/media/LLWP1seiT4fC/giphy.gif'}).render());
 });
 
-app.get('/Banners/:banner', (req, res, next) => {
+app.get('/Banners/:banner', cache(process.env.CACHE_LENGTH), (req, res) => {
   const ComponentFactory = require('./ComponentFactory');
   const Banner = require('./Banner');
   const B = new Banner({

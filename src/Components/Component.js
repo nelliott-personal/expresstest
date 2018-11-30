@@ -1,11 +1,12 @@
 const _ = require('lodash');
+      Banner = require('../Banner');
       log = require('../utils/Log');
 
 class Component {
 
   constructor(options, banner) {
     this._options = options || { };
-    this.banner = banner;
+    this.banner = banner || new Banner();
   }
 
   get(k) {

@@ -10,8 +10,8 @@ class Coverpage extends Component{
 
   get defaults(){
     return {
-      width: this.banner.get('width'),
-      height: this.banner.get('height'),
+      width: this.banner.get('width') || 300,
+      height: this.banner.get('height') || 250,
       imgUrl: 'https://media.giphy.com/media/Aff4ryYiacUO4/giphy.gif'
     }
   }
