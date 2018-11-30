@@ -17,17 +17,18 @@ const app = express();
 
 var cache = (duration) => {
   return (req, res, next) => {
-    console.time('method');
+    let start = new Date()
+    let hrstart = process.hrtime();
     let key = '__express__' + req.originalUrl || req.url;
     let cachedBody = mcache.get(key);
     if(cachedBody){
-      log('cached');
       res.send(cachedBody);
-      console.timeEnd('method');
+      var end = new Date() - start,
+      hrend = process.hrtime(hrstart);
+      log(`Executed ${ req.originalUrl || req.url } (cached) in ${ end }ms `);
       return;
     }
     else{
-      log('not cached');
       res.sendResponse = res.send;
       res.send = (body) => {
         mcache.put(key, body, duration * 1000);
@@ -35,7 +36,9 @@ var cache = (duration) => {
       }
     }
     next();
-    console.timeEnd('method');
+    var end = new Date() - start,
+    hrend = process.hrtime(hrstart);
+    log(`Executed ${ req.originalUrl || req.url } (uncached) in ${ end }ms `);
   }
 }
 
