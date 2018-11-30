@@ -13,8 +13,6 @@ const _ = require('lodash'),
 const app = express(),
       port = process.env.PORT;
 
-
-
 // ROUTES
 
 app.get('/js/:hash?', (req, res, next) => {
