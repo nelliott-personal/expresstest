@@ -18,7 +18,7 @@ app.get('/js/:hash?', (req, res, next) => {
   console.time("method");
   const JSGenerator = require('./JSGenerator');
   const JS = uglify.minify(JSGenerator()).code;
-  const JSPATH = `./jstemplates/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }.js` }`;
+  const JSPATH = `${ process.env.JSTEMPLATE_PATH }/${ req.params.hash || `${ crypto.createHash('md5').update(JS).digest('hex') }` }.js`;
 
   log(chalk.rgb(0, 223, 255)(JSPATH));
 
@@ -64,8 +64,6 @@ app.get('/Banners/:banner', (req, res, next) => {
     height: 90
   });
 
-  const Coverpage = require('./Components/Coverpage');
-  const COMP = new Coverpage({ }, B);
   log(_.map(B.get('states'), 'components'));
   res.send(_.template(`
     <%= B.get('name') %><br />

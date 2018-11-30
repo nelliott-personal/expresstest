@@ -6,7 +6,6 @@ class Coverpage extends Component{
 
   constructor(options, banner){
     super(options, banner);
-    log(banner);
   }
 
   get defaults(){

@@ -6,7 +6,6 @@ class Component {
   constructor(options, banner) {
     this._options = options || { };
     this.banner = banner;
-    log(this.defaults);
   }
 
   get(k) {
